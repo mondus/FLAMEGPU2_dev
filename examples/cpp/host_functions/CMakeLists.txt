@@ -1,4 +1,4 @@
-# Minimum CMake version 3.18 for CUDA --std=c++17 
+# Minimum CMake version 3.18 for CUDA --std=c++17
 cmake_minimum_required(VERSION 3.18...3.25 FATAL_ERROR)
 
 # Set the location of the ROOT flame gpu project relative to this CMakeList.txt
@@ -19,12 +19,19 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/)
 
 # Prepare list of source files
 # Can't do this automatically, as CMake wouldn't know when to regen (as CMakeLists.txt would be unchanged)
-SET(ALL_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cu
+SET(STATIC_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/model.cu
 )
 
-# Add the executable and set required flags for the target
-flamegpu_add_executable("${PROJECT_NAME}" "${ALL_SRC}" "${FLAMEGPU_ROOT}" "${PROJECT_BINARY_DIR}" TRUE)
+# define the model at a static library target,  demonstrating flamegpu_add_library
+flamegpu_add_library("${PROJECT_NAME}_static" "${STATIC_SRC}" "${FLAMEGPU_ROOT}" "${PROJECT_BINARY_DIR}" TRUE)
+
+# Create the actual executable, and link against the static lib
+set(MAIN_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cu
+)
+flamegpu_add_executable("${PROJECT_NAME}" "${MAIN_SRC}" "${FLAMEGPU_ROOT}" "${PROJECT_BINARY_DIR}" TRUE)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_static)
 
 # Also set as startup project (if top level project)
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"  PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}")
