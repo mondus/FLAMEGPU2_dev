@@ -155,6 +155,12 @@ endif()
 if(FLAMEGPU_BUILD_ALL_EXAMPLES OR FLAMEGPU_BUILD_EXAMPLE_DIFFUSION)
     add_subdirectory(examples/cpp/diffusion)
 endif()
+# Test CMake projects to trigger source group errors. Probably don't merge the commit which adds this.
+if(FLAMEGPU_BUILD_ALL_EXAMPLES)
+    add_subdirectory(examples/cpp/source_group_testing_above_tree/inner)
+    add_subdirectory(examples/cpp/source_group_testing_no_src)
+endif()
+
 # Add the tests directory (if required)
 if(FLAMEGPU_BUILD_TESTS OR FLAMEGPU_BUILD_TESTS_DEV)
     # Enable Ctest
