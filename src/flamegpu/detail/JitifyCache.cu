@@ -435,7 +435,7 @@ std::unique_ptr<jitify2::KernelData> JitifyCache::compileKernel(const std::strin
     } else {
         THROW exception::UnknownInternalError("Unexpected AgentFunction template arg count!");
     }
-    auto loaded_program = program->load({ name_expression.str() });
+    jitify2::LoadedProgram loaded_program = program->load({ name_expression.str() });
     if (!loaded_program.ok()) {
         const jitify2::ErrorMsg &compile_error = loaded_program.error();
         fprintf(stderr, "Failed to load program for agent function (condition) '%s', log:\n%s",
@@ -444,7 +444,7 @@ std::unique_ptr<jitify2::KernelData> JitifyCache::compileKernel(const std::strin
             "in JitifyCache::buildProgram().",
             func_name.c_str());
     }
-    auto loaded_kernel = loaded_program->get_kernel("");
+    jitify2::Kernel loaded_kernel = loaded_program->get_kernel(name_expression.str());
     if (loaded_kernel.ok()) {
         return std::make_unique<jitify2::KernelData>(loaded_kernel.value());
     } else {
