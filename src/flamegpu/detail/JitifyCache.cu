@@ -405,11 +405,11 @@ std::unique_ptr<jitify2::KernelData> JitifyCache::compileKernel(const std::strin
     headers.emplace("dynamic/curve_rtc_dynamic.h", dynamic_header);
 
     // cassert header (to remove remaining warnings) TODO: Ask Jitify to implement safe version of this
-    //std::string cassert_h = "cassert\n";
-    //headers.push_back(cassert_h);
+    // std::string cassert_h = "cassert\n";
+    // headers.push_back(cassert_h);
 
     // Add static list of known headers (this greatly improves compilation speed)
-    //getKnownHeaders(headers);
+    // getKnownHeaders(headers);
 
     // jitify to create program (with compilation settings)
     const std::string program_name = func_name + "_program";  // Does this name actually matter?
@@ -559,9 +559,9 @@ std::unique_ptr<jitify2::KernelData> JitifyCache::loadKernel(const std::string &
         "XORWOW_" +
 #endif
         // Use jitify hash methods for consistent hashing between OSs
-        jitify2::detail::sha256(kernel_src + dynamic_header);/*
+        jitify2::detail::sha256(kernel_src + dynamic_header);
     // Does a copy with the right reference exist in memory?
-    if (use_memory_cache) {
+    /*if (use_memory_cache) {
         const auto it = cache.find(short_reference);
         if (it != cache.end()) {
             // Check long reference
