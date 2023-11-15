@@ -8,20 +8,20 @@
 
 #include "jitify/jitify2.hpp"
 //// jitify include for demangle
-//#ifdef _MSC_VER
-//#pragma warning(push, 2)
-//#include "jitify/jitify.hpp"
-//#pragma warning(pop)
-//#else
-//#include "jitify/jitify.hpp"
-//#endif
+#ifdef _MSC_VER
+#pragma warning(push, 2)
+#include "jitify/jitify.hpp"
+#pragma warning(pop)
+#else
+#include "jitify/jitify.hpp"
+#endif
 
 namespace flamegpu {
 namespace detail {
 namespace curve {
 
 
-const char* CurveRTCHost::curve_rtc_dynamic_h_template = R"###(dynamic/curve_rtc_dynamic.h
+const char* CurveRTCHost::curve_rtc_dynamic_h_template = R"###(
 #line 1 "$FILENAME"
 #ifndef CURVE_RTC_DYNAMIC_H_
 #define CURVE_RTC_DYNAMIC_H_
