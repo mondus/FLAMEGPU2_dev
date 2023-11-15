@@ -26,6 +26,8 @@
 #pragma warning(pop)
 #endif  // _MSC_VER
 
+#include "jitify/jitify2.hpp"
+
 #include "flamegpu/version.h"
 #include "flamegpu/simulation/detail/CUDAFatAgent.h"
 #include "flamegpu/simulation/detail/CUDAAgentStateList.h"
@@ -610,7 +612,7 @@ void CUDAAgent::addInstantitateFunction(const AgentFunctionData& func, const std
     curve_map.insert(std::unordered_map<std::string, std::unique_ptr<detail::curve::HostCurve>>::value_type(key_name, std::move(curve)));
 }
 
-const jitify::experimental::KernelInstantiation& CUDAAgent::getRTCInstantiation(const std::string &function_name) const {
+const jitify2::KernelData& CUDAAgent::getRTCInstantiation(const std::string &function_name) const {
     CUDARTCFuncMap::const_iterator mm = rtc_func_map.find(function_name);
     if (mm == rtc_func_map.end()) {
         THROW exception::InvalidAgentFunc("Function name '%s' is not a runtime compiled agent function in agent '%s', "

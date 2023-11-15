@@ -39,12 +39,12 @@ class CUDAAgent : public AgentInterface {
     /**
      *  map of agent function name to RTC function instance
      */
-     typedef std::map<const std::string, std::unique_ptr<jitify::experimental::KernelInstantiation>> CUDARTCFuncMap;
+     typedef std::map<const std::string, std::unique_ptr<jitify2::KernelData>> CUDARTCFuncMap;
      typedef std::map<const std::string, std::unique_ptr<detail::curve::CurveRTCHost>> CUDARTCHeaderMap;
     /**
      * Element type of CUDARTCFuncMap
      */
-    typedef std::pair<const std::string, std::unique_ptr<jitify::experimental::KernelInstantiation>> CUDARTCFuncMapPair;
+    typedef std::pair<const std::string, std::unique_ptr<jitify2::KernelData>> CUDARTCFuncMapPair;
     /**
      * Normal constructor
      * @param description Agent description of the agent
@@ -224,7 +224,7 @@ class CUDAAgent : public AgentInterface {
      * Will throw an exception::InvalidAgentFunc excpetion if the function name does not have a valid instantiation
      * @param function_name the name of the RTC agent function or the agent function name suffixed with condition (if it is a function condition)
      */
-    const jitify::experimental::KernelInstantiation& getRTCInstantiation(const std::string &function_name) const;
+    const jitify2::KernelData& getRTCInstantiation(const std::string &function_name) const;
     detail::curve::CurveRTCHost &getRTCHeader(const std::string &function_name) const;
     /**
      * Returns the host interface for managing the curve instance for the named agent function

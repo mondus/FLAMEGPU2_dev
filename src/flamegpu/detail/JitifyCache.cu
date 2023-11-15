@@ -7,13 +7,13 @@
 #include <array>
 #include <filesystem>
 
+#include "jitify/jitify2.hpp"
+
 #include "flamegpu/version.h"
 #include "flamegpu/exception/FLAMEGPUException.h"
 #include "flamegpu/detail/compute_capability.cuh"
 #include "flamegpu/util/nvtx.h"
 
-using jitify::detail::hash_combine;
-using jitify::detail::hash_larson64;
 
 namespace flamegpu {
 namespace detail {
@@ -307,7 +307,7 @@ bool confirmFLAMEGPUHeaderVersion(const std::string &flamegpuIncludeDir, const s
 }  // namespace
 
 std::mutex JitifyCache::instance_mutex;
-std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::compileKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
+std::unique_ptr<jitify2::KernelData> JitifyCache::compileKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
     flamegpu::util::nvtx::Range range{"JitifyCache::compileKernel"};
     // find and validate the cuda include directory via CUDA_PATH or CUDA_HOME.
     static const std::string cuda_include_dir = getCUDAIncludeDir();
@@ -319,7 +319,7 @@ std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::compileK
 
      // vector of compiler options for jitify
     std::vector<std::string> options;
-    std::vector<std::string> headers;
+    std::unordered_map<std::string, std::string> headers;
 
     // fpgu include directory
     options.push_back(std::string("-I" + std::string(flamegpu_include_dir)));
@@ -402,23 +402,55 @@ std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::compileK
     options.push_back(include_cuda_h);
 
     // get the dynamically generated header from curve rtc
-    headers.push_back(dynamic_header);
+    headers.emplace("dynamic/curve_rtc_dynamic.h", dynamic_header);
 
     // cassert header (to remove remaining warnings) TODO: Ask Jitify to implement safe version of this
-    std::string cassert_h = "cassert\n";
-    headers.push_back(cassert_h);
+    //std::string cassert_h = "cassert\n";
+    //headers.push_back(cassert_h);
 
     // Add static list of known headers (this greatly improves compilation speed)
-    getKnownHeaders(headers);
+    //getKnownHeaders(headers);
 
     // jitify to create program (with compilation settings)
-    try {
-        auto program = jitify::experimental::Program(kernel_src, headers, options);
-        assert(template_args.size() == 1 || template_args.size() == 3);  // Add this assertion incase template args change
-        auto kernel = program.kernel(template_args.size() > 1 ? "flamegpu::agent_function_wrapper" : "flamegpu::agent_function_condition_wrapper");
-        return std::make_unique<jitify::experimental::KernelInstantiation>(kernel, template_args);
-    } catch (std::runtime_error const&) {
-        // jitify does not have a method for getting compile logs so rely on JITIFY_PRINT_LOG defined in cmake
+    const std::string program_name = func_name + "_program";  // Does this name actually matter?
+    jitify2::PreprocessedProgram program = jitify2::Program(program_name, kernel_src, headers)->preprocess(options);
+    if (!program.ok()) {
+        const jitify2::ErrorMsg& compile_error = program.error();
+        fprintf(stderr, "Failed to load program for agent function (condition) '%s', log:\n%s",
+            func_name.c_str(), compile_error.c_str());
+        THROW exception::InvalidAgentFunc("Error loading agent function (or function condition) ('%s'): function had compilation errors (see std::cout), "
+            "in JitifyCache::buildProgram().",
+            func_name.c_str());
+    }
+    // Build the name of the template configuration to be instantiated
+    std::stringstream name_expression;
+    if (template_args.size() == 1) {
+        name_expression << "flamegpu::agent_function_condition_wrapper<";
+        name_expression << template_args[0];
+        name_expression << ">";
+    } else if (template_args.size() == 3) {
+        name_expression << "flamegpu::agent_function_wrapper<";
+        name_expression << template_args[0] << "," << template_args[1] << "," << template_args[2];
+        name_expression << ">";
+    } else {
+        THROW exception::UnknownInternalError("Unexpected AgentFunction template arg count!");
+    }
+    auto loaded_program = program->load({ name_expression.str() });
+    if (!loaded_program.ok()) {
+        const jitify2::ErrorMsg &compile_error = loaded_program.error();
+        fprintf(stderr, "Failed to load program for agent function (condition) '%s', log:\n%s",
+            func_name.c_str(), compile_error.c_str());
+        THROW exception::InvalidAgentFunc("Error loading agent function (or function condition) ('%s'): function had compilation errors (see std::cout), "
+            "in JitifyCache::buildProgram().",
+            func_name.c_str());
+    }
+    auto loaded_kernel = loaded_program->get_kernel("");
+    if (loaded_kernel.ok()) {
+        return std::make_unique<jitify2::KernelData>(loaded_kernel.value());
+    } else {
+        const jitify2::ErrorMsg &compile_error = loaded_kernel.error();
+        fprintf(stderr, "Failed to compile and link agent function (condition) '%s', log:\n%s",
+            func_name.c_str(), compile_error.c_str());
         THROW exception::InvalidAgentFunc("Error compiling runtime agent function (or function condition) ('%s'): function had compilation errors (see std::cout), "
             "in JitifyCache::buildProgram().",
             func_name.c_str());
@@ -497,7 +529,7 @@ void JitifyCache::getKnownHeaders(std::vector<std::string>& headers) {
     headers.push_back("type_traits");
 }
 
-std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::loadKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
+std::unique_ptr<jitify2::KernelData> JitifyCache::loadKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
     flamegpu::util::nvtx::Range range{"JitifyCache::loadKernel"};
     std::lock_guard<std::mutex> lock(cache_mutex);
     // Detect current compute capability=
@@ -527,14 +559,23 @@ std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::loadKern
         "XORWOW_" +
 #endif
         // Use jitify hash methods for consistent hashing between OSs
-        std::to_string(hash_combine(hash_larson64(kernel_src.c_str()), hash_larson64(dynamic_header.c_str())));
+        jitify2::detail::sha256(kernel_src + dynamic_header);/*
     // Does a copy with the right reference exist in memory?
     if (use_memory_cache) {
         const auto it = cache.find(short_reference);
         if (it != cache.end()) {
             // Check long reference
             if (it->second.long_reference == long_reference) {
+<<<<<<< HEAD
                 return std::make_unique<jitify::experimental::KernelInstantiation>(jitify::experimental::KernelInstantiation::deserialize(it->second.serialised_kernelinst));
+=======
+                // Deserialize and return program
+                jitify2::Kernel prog = jitify2::Kernel::deserialize(it->second.serialised_kernel);
+                if (prog.ok()) {
+                    return std::make_unique<jitify2::KernelData>(prog.value());
+                }
+                // Fail silently and try to build code
+>>>>>>> 610634f0 (wip)
             }
         }
     }
@@ -551,24 +592,33 @@ std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::loadKern
                 // Add it to cache for later loads
                 cache.emplace(short_reference, CachedProgram{long_reference, serialised_kernelinst});
                 // Deserialize and return program
+<<<<<<< HEAD
                 return std::make_unique<jitify::experimental::KernelInstantiation>(jitify::experimental::KernelInstantiation::deserialize(serialised_kernelinst));
+=======
+                jitify2::Kernel prog = jitify2::Kernel::deserialize(serialised_kernelinst);
+                if (prog.ok()) {
+                    return std::make_unique<jitify2::KernelData>(prog.value());
+                }
+                // Fail silently and try to build code
+>>>>>>> 610634f0 (wip)
             }
         }
-    }
+    }*/
     // Kernel has not yet been cached
     {
         // Build kernel
-        auto kernelinst = compileKernel(func_name, template_args, kernel_src, dynamic_header);
+        std::unique_ptr<jitify2::KernelData> kernel = compileKernel(func_name, template_args, kernel_src, dynamic_header);
+/*
         // Add it to cache for later loads
-        const std::string serialised_kernelinst = use_memory_cache || use_disk_cache ? kernelinst->serialize() : "";
+        const std::string serialised_kernel = use_memory_cache || use_disk_cache ? kernel->serialize() : "";
         if (use_memory_cache) {
-            cache.emplace(short_reference, CachedProgram{long_reference, serialised_kernelinst});
+            cache.emplace(short_reference, CachedProgram{long_reference, serialised_kernel });
         }
         // Save it to disk
         if (use_disk_cache) {
             std::ofstream ofs(cache_file, std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
             if (ofs) {
-                ofs << serialised_kernelinst;
+                ofs << serialised_kernel;
                 ofs.close();
             }
             ofs = std::ofstream(reference_file, std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
@@ -577,7 +627,8 @@ std::unique_ptr<jitify::experimental::KernelInstantiation> JitifyCache::loadKern
                 ofs.close();
             }
         }
-        return kernelinst;
+*/
+        return kernel;
     }
 }
 void JitifyCache::useMemoryCache(bool yesno) {

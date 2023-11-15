@@ -6,6 +6,8 @@
 #include <map>
 #include <numeric>
 
+#include "jitify/jitify2.hpp"
+
 #include "flamegpu/detail/curand.cuh"
 #include "flamegpu/model/AgentFunctionData.cuh"
 #include "flamegpu/model/LayerData.h"
@@ -736,24 +738,22 @@ void CUDASimulation::stepLayer(const std::shared_ptr<LayerData>& layer, const un
                 } else {  // RTC function
                     std::string func_condition_identifier = func_name + "_condition";
                     // get instantiation
-                    const jitify::experimental::KernelInstantiation& instance = cuda_agent.getRTCInstantiation(func_condition_identifier);
+                    const jitify2::KernelData& instance = cuda_agent.getRTCInstantiation(func_condition_identifier);
                     // calculate the grid block size for main agent function
-                    CUfunction cu_func = (CUfunction)instance;
+                    CUfunction cu_func = instance.function();
                     cuOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, cu_func, 0, 0, state_list_size);
                     //! Round up according to CUDAAgent state list size
                     gridSize = (state_list_size + blockSize - 1) / blockSize;
                     // launch the kernel
-                    CUresult a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx)).launch({
+                    jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch({
 #if !defined(FLAMEGPU_SEATBELTS) || FLAMEGPU_SEATBELTS
                         reinterpret_cast<void*>(&error_buffer),
 #endif
                         const_cast<void *>(reinterpret_cast<const void*>(&state_list_size)),
                         reinterpret_cast<void*>(&t_rng),
                         reinterpret_cast<void*>(&scanFlag_agentDeath) });
-                    if (a != CUresult::CUDA_SUCCESS) {
-                        const char* err_str = nullptr;
-                        cuGetErrorString(a, &err_str);
-                        THROW exception::InvalidAgentFunc("There was a problem launching the runtime agent function condition '%s': %s", func_des->rtc_func_condition_name.c_str(), err_str);
+                    if (!a.empty()) {
+                        THROW exception::InvalidAgentFunc("There was a problem launching the runtime agent function condition '%s': %s", func_des->rtc_func_condition_name.c_str(), a.c_str());
                     }
                     gpuErrchkLaunch();
                 }
@@ -966,14 +966,14 @@ void CUDASimulation::stepLayer(const std::shared_ptr<LayerData>& layer, const un
                 gpuErrchkLaunch();
             } else {      // assume this is a runtime specified agent function
                 // get instantiation
-                const jitify::experimental::KernelInstantiation& instance = cuda_agent.getRTCInstantiation(func_name);
+                const jitify2::KernelData& instance = cuda_agent.getRTCInstantiation(func_name);
                 // calculate the grid block size for main agent function
-                CUfunction cu_func = (CUfunction)instance;
+                CUfunction cu_func = (CUfunction)instance.function();
                 cuOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, cu_func, 0, 0, state_list_size);
                 //! Round up according to CUDAAgent state list size
                 gridSize = (state_list_size + blockSize - 1) / blockSize;
                 // launch the kernel
-                CUresult a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx)).launch({
+                jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch({
 #if !defined(FLAMEGPU_SEATBELTS) || FLAMEGPU_SEATBELTS
                     reinterpret_cast<void*>(&error_buffer),
 #endif
@@ -985,10 +985,8 @@ void CUDASimulation::stepLayer(const std::shared_ptr<LayerData>& layer, const un
                     reinterpret_cast<void*>(&scanFlag_agentDeath),
                     reinterpret_cast<void*>(&scanFlag_messageOutput),
                     reinterpret_cast<void*>(&scanFlag_agentOutput)});
-                if (a != CUresult::CUDA_SUCCESS) {
-                    const char* err_str = nullptr;
-                    cuGetErrorString(a, &err_str);
-                    THROW exception::InvalidAgentFunc("There was a problem launching the runtime agent function '%s': %s", func_name.c_str(), err_str);
+                if (!a.empty()) {
+                    THROW exception::InvalidAgentFunc("There was a problem launching the runtime agent function '%s': %s", func_name.c_str(), a.c_str());
                 }
                 gpuErrchkLaunch();
             }

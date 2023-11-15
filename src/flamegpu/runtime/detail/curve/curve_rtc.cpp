@@ -6,14 +6,15 @@
 #include "flamegpu/simulation/detail/EnvironmentManager.cuh"
 #include "flamegpu/detail/cuda.cuh"
 
-// jitify include for demangle
-#ifdef _MSC_VER
-#pragma warning(push, 2)
-#include "jitify/jitify.hpp"
-#pragma warning(pop)
-#else
-#include "jitify/jitify.hpp"
-#endif
+#include "jitify/jitify2.hpp"
+//// jitify include for demangle
+//#ifdef _MSC_VER
+//#pragma warning(push, 2)
+//#include "jitify/jitify.hpp"
+//#pragma warning(pop)
+//#else
+//#include "jitify/jitify.hpp"
+//#endif
 
 namespace flamegpu {
 namespace detail {
@@ -1052,10 +1053,11 @@ void CurveRTCHost::updateEnvCache(const void *env_ptr, const size_t bufferLen) {
             bufferLen, agent_data_offset);
     }
 }
-void CurveRTCHost::updateDevice_async(const jitify::experimental::KernelInstantiation& instance, cudaStream_t stream) {
+void CurveRTCHost::updateDevice_async(const jitify2::KernelData& instance, cudaStream_t stream) {
     // The namespace is required here, but not in other uses of getVariableSymbolName.
     std::string cache_var_name = std::string("flamegpu::detail::curve::") + getVariableSymbolName();
-    CUdeviceptr d_var_ptr = instance.get_global_ptr(cache_var_name.c_str());
+    CUdeviceptr d_var_ptr;
+    instance.program().get_global_ptr(cache_var_name.c_str(), &d_var_ptr);
     gpuErrchkDriverAPI(cuMemcpyHtoDAsync(d_var_ptr, h_data_buffer, data_buffer_size, stream));
 }
 
