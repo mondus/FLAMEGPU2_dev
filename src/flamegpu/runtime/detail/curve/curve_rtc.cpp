@@ -1,4 +1,8 @@
 #include <sstream>
+#ifndef _MSC_VER
+// abi::__cxa_demangle()
+#include <cxxabi.h>
+#endif
 
 #include "flamegpu/runtime/detail/curve/curve_rtc.cuh"
 #include "flamegpu/exception/FLAMEGPUException.h"
@@ -7,14 +11,6 @@
 #include "flamegpu/detail/cuda.cuh"
 
 #include "jitify/jitify2.hpp"
-//// jitify include for demangle
-#ifdef _MSC_VER
-#pragma warning(push, 2)
-#include "jitify/jitify.hpp"
-#pragma warning(pop)
-#else
-#include "jitify/jitify.hpp"
-#endif
 
 namespace flamegpu {
 namespace detail {
@@ -1005,7 +1001,22 @@ std::string CurveRTCHost::getVariableSymbolName() {
 
 std::string CurveRTCHost::demangle(const char* verbose_name) {
 #ifndef _MSC_VER
-    std::string s = jitify::reflection::detail::demangle_cuda_symbol(verbose_name);
+    // Implementation from Jitify1
+    size_t bufsize = 0;
+    char* buf = nullptr;
+    std::string s;
+    int status;
+    auto demangled_ptr = std::unique_ptr<char, decltype(free)*>(
+        abi::__cxa_demangle(mangled_name, buf, &bufsize, &status), free);
+    if (status == 0) {
+        s = demangled_ptr.get();  // all worked as expected
+    } else if (status == -2) {
+        s = mangled_name;  // we interpret this as plain C name
+    } else if (status == -1) {
+        THROW exception::UnknownInternalError("memory allocation failure in __cxa_demangle");
+    } else if (status == -3) {
+        THROW exception::UnknownInternalError("invalid argument to __cxa_demangle");
+    }
 #else
     // Jitify removed the required demangle function, this is a basic clone of what was being done in earlier version
     // It's possible jitify::reflection::detail::demangle_native_type() would work, however that requires type_info, not type_index
