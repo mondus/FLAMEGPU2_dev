@@ -85,7 +85,7 @@ std::string loadFile(const std::filesystem::path &filepath) {
     std::ifstream ifs;
     ifs.open(filepath, std::ifstream::binary);
     if (!ifs)
-    return "";
+        return "";
     // get length of file
     ifs.seekg(0, ifs.end);
     const std::streamoff length = ifs.tellg();
@@ -307,6 +307,43 @@ bool confirmFLAMEGPUHeaderVersion(const std::string &flamegpuIncludeDir, const s
 
 }  // namespace
 
+void JitifyCache::getKnownHeaders(const std::string& flamegpu_include_dir, std::unordered_map<std::string, std::string>& headers) {
+    // Add known headers from FLAMEGPU include hierarchy
+    headers.emplace("flamegpu/defines.h", loadFile(flamegpu_include_dir + "/flamegpu/defines.h"));
+    headers.emplace("flamegpu/exception/FLAMEGPUDeviceException.cuh", loadFile(flamegpu_include_dir + "/flamegpu/exception/FLAMEGPUDeviceException.cuh"));
+    headers.emplace("flamegpu/exception/FLAMEGPUDeviceException_device.cuh", loadFile(flamegpu_include_dir + "/flamegpu/exception/FLAMEGPUDeviceException_device.cuh"));
+    headers.emplace("flamegpu/simulation/detail/CUDAScanCompaction.h", loadFile(flamegpu_include_dir + "/flamegpu/simulation/detail/CUDAScanCompaction.h"));
+    headers.emplace("flamegpu/runtime/AgentFunction.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/AgentFunction.cuh"));
+    headers.emplace("flamegpu/runtime/AgentFunctionCondition.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/AgentFunctionCondition.cuh"));
+    headers.emplace("flamegpu/runtime/AgentFunctionCondition_shim.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/AgentFunctionCondition_shim.cuh"));
+    headers.emplace("flamegpu/runtime/AgentFunction_shim.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/AgentFunction_shim.cuh"));
+    headers.emplace("flamegpu/runtime/detail/SharedBlock.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/detail/SharedBlock.h"));
+    headers.emplace("flamegpu/runtime/detail/curve/Curve.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/detail/curve/Curve.cuh"));
+    headers.emplace("flamegpu/runtime/DeviceAPI.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/DeviceAPI.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray/MessageArrayDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray/MessageArrayDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray2D.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray2D.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray2D/MessageArray2DDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray2D/MessageArray2DDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray3D.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray3D.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageArray3D/MessageArray3DDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageArray3D/MessageArray3DDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageBruteForce.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageBruteForce.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageBruteForce/MessageBruteForceDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageBruteForce/MessageBruteForceDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageBucket.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageBucket.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageBucket/MessageBucketDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageBucket/MessageBucketDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageSpatial2D.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageSpatial2D.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageSpatial2D/MessageSpatial2DDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageSpatial2D/MessageSpatial2DDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageSpatial3D.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageSpatial3D.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageSpatial3D/MessageSpatial3DDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageSpatial3D/MessageSpatial3DDevice.cuh"));
+    headers.emplace("flamegpu/runtime/messaging/MessageNone.h", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageNone.h"));
+    headers.emplace("flamegpu/runtime/messaging/MessageNone/MessageNoneDevice.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/messaging/MessageNone/MessageNoneDevice.cuh"));
+    headers.emplace("flamegpu/runtime/random/AgentRandom.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/random/AgentRandom.cuh"));
+    headers.emplace("flamegpu/runtime/environment/DeviceEnvironment.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/environment/DeviceEnvironment.cuh"));
+    headers.emplace("flamegpu/runtime/environment/DeviceMacroProperty.cuh", loadFile(flamegpu_include_dir + "/flamegpu/runtime/environment/DeviceMacroProperty.cuh"));
+    headers.emplace("flamegpu/detail/StaticAssert.h", loadFile(flamegpu_include_dir + "/flamegpu/detail/StaticAssert.h"));
+    headers.emplace("flamegpu/detail/type_decode.h", loadFile(flamegpu_include_dir + "/flamegpu/detail/type_decode.h"));
+    headers.emplace("flamegpu/detail/curand.cuh", loadFile(flamegpu_include_dir + "/flamegpu/detail/curand.cuh"));
+    headers.emplace("flamegpu/util/dstring.h", loadFile(flamegpu_include_dir + "/flamegpu/util/dstring.h"));
+}
 std::mutex JitifyCache::instance_mutex;
 std::unique_ptr<jitify2::PreprocessedProgramData> JitifyCache::preprocessKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
     flamegpu::util::nvtx::Range range{"JitifyCache::preprocessKernel"};
@@ -405,12 +442,7 @@ std::unique_ptr<jitify2::PreprocessedProgramData> JitifyCache::preprocessKernel(
     // get the dynamically generated header from curve rtc
     headers.emplace("dynamic/curve_rtc_dynamic.h", dynamic_header);
 
-    // cassert header (to remove remaining warnings) TODO: Ask Jitify to implement safe version of this
-    // std::string cassert_h = "cassert\n";
-    // headers.push_back(cassert_h);
-
-    // Add static list of known headers (this greatly improves compilation speed)
-    // getKnownHeaders(headers);
+    getKnownHeaders(flamegpu_include_dir, headers);
 
     // jitify to create program (with compilation settings)
     const std::string program_name = func_name + "_program";  // Does this name actually matter?
@@ -425,79 +457,6 @@ std::unique_ptr<jitify2::PreprocessedProgramData> JitifyCache::preprocessKernel(
     }
     return std::make_unique<jitify2::PreprocessedProgramData>(program.value());
 }
-void JitifyCache::getKnownHeaders(std::vector<std::string>& headers) {
-    // Add known headers from hierarchy
-    headers.push_back("algorithm");
-    headers.push_back("assert.h");
-    headers.push_back("cassert");
-    headers.push_back("cfloat");
-    headers.push_back("climits");
-    headers.push_back("cmath");
-    headers.push_back("cstddef");
-    headers.push_back("cstdint");
-    headers.push_back("cstring");
-    headers.push_back("cuda_runtime.h");
-    headers.push_back("curand.h");
-    headers.push_back("curand_discrete.h");
-    headers.push_back("curand_discrete2.h");
-    headers.push_back("curand_globals.h");
-    headers.push_back("curand_kernel.h");
-    headers.push_back("curand_lognormal.h");
-    headers.push_back("curand_mrg32k3a.h");
-    headers.push_back("curand_mtgp32.h");
-    headers.push_back("curand_mtgp32_kernel.h");
-    headers.push_back("curand_normal.h");
-    headers.push_back("curand_normal_static.h");
-    headers.push_back("curand_philox4x32_x.h");
-    headers.push_back("curand_poisson.h");
-    headers.push_back("curand_precalc.h");
-    headers.push_back("curand_uniform.h");
-    headers.push_back("device_launch_parameters.h");
-    // headers.push_back("dynamic/curve_rtc_dynamic.h");  // This is already included with source, having this makes a vague compile err
-    headers.push_back("flamegpu/defines.h");
-    headers.push_back("flamegpu/exception/FLAMEGPUDeviceException.cuh");
-    headers.push_back("flamegpu/exception/FLAMEGPUDeviceException_device.cuh");
-    headers.push_back("flamegpu/simulation/detail/CUDAScanCompaction.h");
-    headers.push_back("flamegpu/runtime/AgentFunction.cuh");
-    headers.push_back("flamegpu/runtime/AgentFunctionCondition.cuh");
-    headers.push_back("flamegpu/runtime/AgentFunctionCondition_shim.cuh");
-    headers.push_back("flamegpu/runtime/AgentFunction_shim.cuh");
-    headers.push_back("flamegpu/runtime/DeviceAPI.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray/MessageArrayDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray2D.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray2D/MessageArray2DDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray3D.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageArray3D/MessageArray3DDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageBruteForce.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageBruteForce/MessageBruteForceDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageBucket.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageBucket/MessageBucketDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageSpatial2D.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageSpatial2D/MessageSpatial2DDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageSpatial3D.h");
-    headers.push_back("flamegpu/runtime/messaging/MessageSpatial3D/MessageSpatial3DDevice.cuh");
-    headers.push_back("flamegpu/runtime/messaging/MessageNone.h");
-    headers.push_back("flamegpu/runtime/random/AgentRandom.cuh");
-    headers.push_back("flamegpu/runtime/environment/DeviceEnvironment.cuh");
-    headers.push_back("flamegpu/runtime/environment/DeviceMacroProperty.cuh");
-    headers.push_back("flamegpu/detail/StaticAssert.h");
-    headers.push_back("flamegpu/detail/type_decode.h");
-    // headers.push_back("jitify_preinclude.h");  // I think Jitify adds this itself
-    headers.push_back("limits");
-    headers.push_back("limits.h");
-    headers.push_back("math.h");
-    headers.push_back("memory.h");
-    headers.push_back("stddef.h");
-    headers.push_back("stdint.h");
-    headers.push_back("stdio.h");
-    headers.push_back("stdlib.h");
-    headers.push_back("string");
-    headers.push_back("string.h");
-    headers.push_back("time.h");
-    headers.push_back("type_traits");
-}
-
 std::unique_ptr<jitify2::KernelData> JitifyCache::loadKernel(const std::string &func_name, const std::vector<std::string> &template_args, const std::string &kernel_src, const std::string &dynamic_header) {
     flamegpu::util::nvtx::Range range{"JitifyCache::loadKernel"};
     std::lock_guard<std::mutex> lock(cache_mutex);
