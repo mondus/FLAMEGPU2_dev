@@ -622,6 +622,15 @@ const jitify2::KernelData& CUDAAgent::getRTCInstantiation(const std::string &fun
 
     return *mm->second;
 }
+void CUDAAgent::destroyRTCInstances(bool context_alive) {
+    for (auto &[_, fn] : rtc_func_map) {
+        if (context_alive) {
+            fn.reset();
+        } else {
+            fn.release();
+        }
+    }
+}
 detail::curve::CurveRTCHost& CUDAAgent::getRTCHeader(const std::string &function_name) const {
     CUDARTCHeaderMap::const_iterator mm = rtc_header_map.find(function_name);
     if (mm == rtc_header_map.end()) {

@@ -227,6 +227,12 @@ class CUDAAgent : public AgentInterface {
     const jitify2::KernelData& getRTCInstantiation(const std::string &function_name) const;
     detail::curve::CurveRTCHost &getRTCHeader(const std::string &function_name) const;
     /**
+     * Destroy all jitify2::KernelData instances
+     * @param context_alive If true, their deconstructor will be used
+     * @note This should only be triggered during the CUDASimulation destructor
+     */
+    void destroyRTCInstances(bool context_alive);
+    /**
      * Returns the host interface for managing the curve instance for the named agent function
      * @param function_name The name of the agent's agent function, to return the curve instance for
      */
