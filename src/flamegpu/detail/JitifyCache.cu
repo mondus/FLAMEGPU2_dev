@@ -80,6 +80,7 @@ std::vector<std::filesystem::path> getIncludeDirs() {
     }
     return rtn;
 }
+/*  Temp comment to suppress warning in CUDA 11.0 CI
 std::string loadFile(const std::filesystem::path &filepath) {
     std::ifstream ifs;
     ifs.open(filepath, std::ifstream::binary);
@@ -96,7 +97,7 @@ std::string loadFile(const std::filesystem::path &filepath) {
     ifs.close();
     return rtn;
 }
-
+*/
 /**
  * Find the cuda include directory.
  * Throws exceptions if it can not be found.
