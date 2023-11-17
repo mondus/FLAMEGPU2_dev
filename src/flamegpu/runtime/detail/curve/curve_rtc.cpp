@@ -1007,11 +1007,11 @@ std::string CurveRTCHost::demangle(const char* verbose_name) {
     std::string s;
     int status;
     auto demangled_ptr = std::unique_ptr<char, decltype(free)*>(
-        abi::__cxa_demangle(mangled_name, buf, &bufsize, &status), free);
+        abi::__cxa_demangle(verbose_name, buf, &bufsize, &status), free);
     if (status == 0) {
         s = demangled_ptr.get();  // all worked as expected
     } else if (status == -2) {
-        s = mangled_name;  // we interpret this as plain C name
+        s = verbose_name;  // we interpret this as plain C name
     } else if (status == -1) {
         THROW exception::UnknownInternalError("memory allocation failure in __cxa_demangle");
     } else if (status == -3) {
