@@ -749,7 +749,7 @@ void CUDASimulation::stepLayer(const std::shared_ptr<LayerData>& layer, const un
                     //! Round up according to CUDAAgent state list size
                     gridSize = (state_list_size + blockSize - 1) / blockSize;
                     // launch the kernel
-                    jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch({
+                    jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch_raw({
 #if !defined(FLAMEGPU_SEATBELTS) || FLAMEGPU_SEATBELTS
                         reinterpret_cast<void*>(&error_buffer),
 #endif
@@ -977,7 +977,7 @@ void CUDASimulation::stepLayer(const std::shared_ptr<LayerData>& layer, const un
                 //! Round up according to CUDAAgent state list size
                 gridSize = (state_list_size + blockSize - 1) / blockSize;
                 // launch the kernel
-                jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch({
+                jitify2::ErrorMsg a = instance.configure(gridSize, blockSize, 0, this->getStream(streamIdx))->launch_raw({
 #if !defined(FLAMEGPU_SEATBELTS) || FLAMEGPU_SEATBELTS
                     reinterpret_cast<void*>(&error_buffer),
 #endif
