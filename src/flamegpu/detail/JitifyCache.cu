@@ -439,11 +439,6 @@ std::unique_ptr<jitify2::LinkedProgramData> JitifyCache::buildProgram(
     options.push_back("--define-macro=FLAMEGPU_SEATBELTS=0");
 #endif
 
-    // cuda.h
-    std::string include_cuda_h;
-    include_cuda_h = "--pre-include=" + cuda_include_dir + "/cuda.h";
-    options.push_back(include_cuda_h);
-
     // get the dynamically generated header from curve rtc
     headers.emplace("dynamic/curve_rtc_dynamic.h", dynamic_header);
 
