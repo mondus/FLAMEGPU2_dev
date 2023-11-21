@@ -10,10 +10,11 @@ cmake_policy(SET CMP0079 NEW)
 FetchContent_Declare(
     jitify
     # Temp until https://github.com/NVIDIA/jitify/pull/132 is merged
-    #GIT_REPOSITORY https://github.com/Robadob/jitify.git
+    GIT_REPOSITORY https://github.com/Robadob/jitify.git
     #GIT_TAG        jitify2-windows-werror
-    GIT_REPOSITORY https://github.com/NVIDIA/jitify.git
-    GIT_TAG        jitify2-preprocessing-overhaul
+    GIT_TAG        jitify2-preprocess-windows-werror
+    #GIT_REPOSITORY https://github.com/NVIDIA/jitify.git
+    #GIT_TAG        jitify2-preprocessing-overhaul
     SOURCE_DIR     ${FETCHCONTENT_BASE_DIR}/jitify-src/jitify
     GIT_PROGRESS   ON
     # UPDATE_DISCONNECTED   ON
