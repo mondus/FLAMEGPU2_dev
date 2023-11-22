@@ -207,7 +207,7 @@ break_flamegpu_inc_dir_loop:
             THROW flamegpu::exception::InvalidAgentFunc("Error compiling runtime agent function: Unable to automatically determine include directory and FLAMEGPU_INC_DIR environment variable not set");
         }
     }
-    return include_dir_str;
+    return std::filesystem::absolute(include_dir_str).generic_string();
 }
 
 #ifdef FLAMEGPU_USE_GLM
@@ -442,7 +442,7 @@ std::unique_ptr<jitify2::LinkedProgramData> JitifyCache::buildProgram(
     // get the dynamically generated header from curve rtc
     headers.emplace("dynamic/curve_rtc_dynamic.h", dynamic_header);
 
-    getKnownHeaders(flamegpu_include_dir, headers);
+    //getKnownHeaders(flamegpu_include_dir, headers);
 
     // jitify to create program (with compilation settings)
     const std::string program_name = func_name + "_program";  // Does this name actually matter?
