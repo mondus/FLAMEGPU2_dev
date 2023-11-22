@@ -1990,7 +1990,7 @@ void CUDASimulation::destroyStreams() {
 }
 void CUDASimulation::safeDestroyJitify() {
     // Can't have done any RTC if device is not init
-    if (deviceInitialised != -1)
+    if (deviceInitialised == -1)
         return;
     // See note in destroyStreams()
     bool safeToDestroy = flamegpu::detail::cuda::cuDevicePrimaryContextIsActive(deviceInitialised);
